@@ -137,29 +137,11 @@ table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
 [hidden]{display:none !important}
 @media print{.tabs,.actions,.icon{display:none}body{background:#fff;color:#000}.block{break-inside:avoid;border-color:#ccc}}
 
-/* Fire hero: the YouTube video is a background layer only. The overlay keeps the player itself out of view. */
-.fire-hero{position:relative;min-height:330px;border:1px solid var(--rule);border-radius:14px;overflow:hidden;margin-bottom:22px;background:#090f14;isolation:isolate;display:flex;align-items:center;justify-content:center;text-align:center}
-.fire-hero iframe{position:absolute;inset:-8%;width:116%;height:116%;border:0;z-index:-2;pointer-events:none;transform:scale(1.08)}
-.fire-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,10,15,.90),rgba(4,10,15,.38),rgba(4,10,15,.88));z-index:-1}
-.fire-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.12) 45%,rgba(0,0,0,.65));z-index:-1}
-.fire-hero-content{position:relative;z-index:2;padding:55px 22px;max-width:950px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.65)}
-.fire-hero-kicker{font-size:.8rem;letter-spacing:.48em;color:#ffd18a;text-transform:uppercase;font-weight:600;margin-bottom:12px}
-.fire-hero h2{margin:0;font-size:clamp(2.2rem,6vw,4.8rem);line-height:1.02;letter-spacing:.05em;font-weight:700}
-.fire-hero p{margin:16px auto 0;font-size:clamp(.9rem,1.7vw,1.1rem);letter-spacing:.22em;text-transform:uppercase;color:#f3f5f7}
-@media(max-width:640px){.fire-hero{min-height:270px}.fire-hero-content{padding:42px 18px}.fire-hero-kicker{letter-spacing:.28em}.fire-hero p{letter-spacing:.12em}}
 </style>
 </head>
 <body>
 
 <div class="wrap">
-  <section class="fire-hero" aria-label="Fuel simulation introduction">
-    <iframe src="https://www.youtube-nocookie.com/embed/8FeCmr1jAf4?autoplay=1&mute=1&loop=1&playlist=8FeCmr1jAf4&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1" title="Fire background video" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" tabindex="-1"></iframe>
-    <div class="fire-hero-content">
-      <div class="fire-hero-kicker">Fuel to Steam Ratio</div>
-      <h2>FUEL SIMULATION</h2>
-      <p>Optimise fuel. Maximise efficiency.</p>
-    </div>
-  </section>
 
 
   <div class="mast">
@@ -168,11 +150,13 @@ table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
       <h1>Fuel &amp; Boiler Performance Simulator</h1>
       <p>Ultimate-analysis based GCV/NCV, steam-to-fuel ratio and fuel consumption for industrial boilers</p>
     </div>
+    <a class="btn go" href="index.html?page=analysis" style="margin-left:auto;text-decoration:none">Analysis &amp; Report →</a>
   </div>
 
   <div class="tabs" role="tablist">
     <button role="tab" id="t1" aria-selected="true" aria-controls="p1"><span class="badge">1</span>Simulation</button>
     <button role="tab" id="t2" aria-selected="false" aria-controls="p2"><span class="badge">2</span>Additional boiler parameters</button>
+    <button role="tab" id="t3" aria-selected="false" aria-controls="p3"><span class="badge">3</span>Customer Summary</button>
   </div>
 
   <!-- ================= SIMULATION ================= -->
@@ -398,6 +382,43 @@ table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
         </div>
       </aside>
     </div>
+  </section>
+
+  <!-- ================= CUSTOMER SUMMARY ================= -->
+  <section id="p3" role="tabpanel" aria-labelledby="t3" hidden>
+    <div class="block" style="margin-top:4px">
+      <h2><span class="step">✓</span>Customer-ready final results</h2>
+      <div class="body">
+        <p class="hint" style="margin-top:0">All values below are calculated from the Simulation inputs. Use this page as the final customer discussion sheet.</p>
+        <div class="readout">
+          <div class="cell amber"><span>Boiler efficiency</span><strong id="finalEff">—</strong><em>%</em></div>
+          <div class="cell blue"><span>Steam flow / target</span><strong id="finalSteam">—</strong><em>TPH</em></div>
+          <div class="cell green"><span>Steam / fuel ratio</span><strong id="finalSf">—</strong><em>t/t</em></div>
+          <div class="cell amber"><span>Fuel required</span><strong id="finalFuel">—</strong><em>TPH</em></div>
+        </div>
+        <div class="scroll"><table><tbody>
+          <tr><td>GCV, as received</td><td class="n" id="finalGcv">—</td></tr>
+          <tr><td>NCV, as received</td><td class="n" id="finalNcv">—</td></tr>
+          <tr><td>Indirect efficiency from heat losses</td><td class="n" id="finalIndirectEff">—</td></tr>
+          <tr><td>Heat delivered to steam</td><td class="n" id="finalHeat">—</td></tr>
+          <tr><td>Fuel energy input</td><td class="n" id="finalEnergy">—</td></tr>
+          <tr><td>Fuel per tonne of steam</td><td class="n" id="finalFuelPerSteam">—</td></tr>
+          <tr><td>Steam cost / tonne</td><td class="n" id="finalCostSteam">—</td></tr>
+          <tr><td>Fuel cost / hour at target load</td><td class="n" id="finalCostHour">—</td></tr>
+          <tr><td>Fuel cost / day</td><td class="n" id="finalCostDay">—</td></tr>
+          <tr><td>Fuel cost / month</td><td class="n" id="finalCostMonth">—</td></tr>
+          <tr><td>CO₂ per tonne fuel</td><td class="n" id="finalCo2Fuel">—</td></tr>
+          <tr><td>CO₂ per tonne steam</td><td class="n" id="finalCo2Steam">—</td></tr>
+          <tr><td>CO₂ per day</td><td class="n" id="finalCo2Day">—</td></tr>
+          <tr><td>Ash generated / day</td><td class="n" id="finalAshDay">—</td></tr>
+          <tr><td>Theoretical air</td><td class="n" id="finalTA">—</td></tr>
+          <tr><td>Actual air supplied</td><td class="n" id="finalAA">—</td></tr>
+          <tr><td>Dry flue gas</td><td class="n" id="finalFG">—</td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+    <div class="block"><h2>Customer discussion</h2><div class="body"><div class="note">At the selected operating condition: <strong id="finalStatement">—</strong></div></div></div>
+    <div class="actions"><a class="btn" href="index.html?page=analysis" style="text-decoration:none">Open Analysis &amp; Site Assessment →</a><button class="btn go" onclick="window.print()">Print Customer Summary</button></div>
   </section>
 
   <!-- ================= ASSESSMENT ================= -->
@@ -660,6 +681,25 @@ function costAndEmissions(C, fuel, sf){
   $("co2Day").textContent  = co2PerDay>0 ? fmt(co2PerDay,2)+" t" : "—";
 }
 
+/* ---------------- customer summary ---------------- */
+function updateCustomerSummary(C,Hh,O,S,M,Ash,gcv,ncv,eff,hs,hf,load,sf,fuel){
+  const set=(id,v)=>{const el=$(id); if(el) el.textContent=v;};
+  const cost=num("fuelCost"), hrs=num("opHrs"), days=num("opDays");
+  const costSteam=sf>0?cost/sf:0, costHour=fuel*cost, costDay=costHour*hrs, costMonth=costDay*days;
+  const co2Fuel=C/100*44/12*1000, co2Steam=sf>0?co2Fuel/sf:0, co2Day=fuel*hrs*co2Fuel/1000;
+  const ashDay=fuel*24*Ash/100, dh=hs-hf, heat=load*1000*dh/3600, energy=fuel*1000*ncv*4.1868/3600;
+  const balanced=Math.abs((C+Hh+O+num("N")+S+M+Ash)-100)<0.05;
+  const TA=(11.6*C+34.8*(Hh-O/8)+4.35*S)/100, AA=TA*(1+num("exAir")/100), FG=AA+1-(9*Hh+M)/100;
+  set("finalEff",fmt(eff,1)); set("finalSteam",fmt(load,2)); set("finalSf",fmt(sf,2)); set("finalFuel",fmt(fuel,2));
+  set("finalGcv",balanced?fmt(gcv,0)+" kcal/kg":"—"); set("finalNcv",balanced?fmt(ncv,0)+" kcal/kg":"—");
+  set("finalIndirectEff",lastEffCalc>0?fmt(lastEffCalc,1)+" %":"—"); set("finalHeat",fmt(heat,0)+" kW"); set("finalEnergy",balanced?fmt(energy,0)+" kW":"—");
+  set("finalFuelPerSteam",sf>0?fmt(1/sf,3)+" t/t":"—"); set("finalCostSteam",costSteam>0?"₹ "+fmt(costSteam,0):"—");
+  set("finalCostHour",costHour>0?"₹ "+fmt(costHour,0):"—"); set("finalCostDay",costDay>0?"₹ "+fmt(costDay,0):"—"); set("finalCostMonth",costMonth>0?"₹ "+fmt(costMonth,0):"—");
+  set("finalCo2Fuel",co2Fuel>0?fmt(co2Fuel,0)+" kg":"—"); set("finalCo2Steam",co2Steam>0?fmt(co2Steam,0)+" kg":"—"); set("finalCo2Day",co2Day>0?fmt(co2Day,2)+" t":"—");
+  set("finalAshDay",fmt(ashDay,2)+" t"); set("finalTA",balanced?fmt(TA,3)+" kg/kg fuel":"—"); set("finalAA",balanced?fmt(AA,3)+" kg/kg fuel":"—"); set("finalFG",balanced?fmt(FG,3)+" kg/kg fuel":"—");
+  set("finalStatement",fmt(eff,1)+"% efficiency • "+fmt(load,2)+" TPH steam flow • "+fmt(sf,2)+" t steam/t fuel • "+(costSteam>0?"₹ "+fmt(costSteam,0):"—")+" direct fuel cost per tonne of steam.");
+}
+
 /* ---------------- recalculate ---------------- */
 function run(){
   const balanced = checkBalance();
@@ -689,6 +729,7 @@ function run(){
 
   lastEffCalc = combustionAndEfficiency(C,Hh,O,S,M,gcv,balanced);
   costAndEmissions(C, fuel, sf);
+  updateCustomerSummary(C,Hh,O,S,M,Ash,gcv,ncv,eff,hs,hf,load,sf,fuel);
   const costPerT = num("fuelCost");
   const co2PerFuelT = C/100 * 44/12 * 1000; // kg CO2 per tonne fuel
   drawMatrix(sf, Ash, costPerT, co2PerFuelT);
