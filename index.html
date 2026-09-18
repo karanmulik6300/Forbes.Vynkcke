@@ -20,7 +20,7 @@
       <button data-page="about" onclick="showPage('about')">About</button>
       <button data-page="simulation" onclick="showPage('simulation')">Simulation</button>
       <button data-page="analysis" onclick="showPage('analysis')">Analysis</button>
-      <button data-page="summary" onclick="showPage('summary')">Customer Summary</button>
+      <button data-page="summary" onclick="window.location.href='customer-summary.html'">Customer Summary</button>
     </nav>
   </div>
 </header>
@@ -123,7 +123,7 @@
 </tbody></table></div>
 <div class="custom-actions"><button class="add-btn" onclick="window.print()">Save / Print Report</button><button class="add-btn" onclick="saveReportToDrive()" style="background:#2b6ef2;color:#fff">Save to Google Drive</button></div><p class="info" id="driveStatus" style="margin-top:10px"></p></div>
 <div class="card"><div class="section-title">Site Notes</div><div class="custom-grid"><textarea id="p27" class="report-textarea" rows="3" placeholder="Site observations"></textarea><textarea id="p28" class="report-textarea" rows="3" placeholder="Customer feedback"></textarea></div></div>
-<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← Simulation</button><button class="page-nav-btn page-nav-next" onclick="goNextPage(this)">Customer Summary →</button></div>
+<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← Simulation</button><button class="page-nav-btn page-nav-next" onclick="window.location.href='customer-summary.html'">Customer Summary →</button></div>
 </main></section>
 <section id="summary" class="site-page">
 <main class="sim-shell container"><div class="sim-title"><div><h1>Customer Summary</h1><p>Final results from the latest simulation run.</p></div><span class="pill">CUSTOMER VIEW</span></div>
