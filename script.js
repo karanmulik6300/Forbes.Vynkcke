@@ -325,7 +325,8 @@ const fuels = {
         gcv: 6944.44,
         moisture: 28,
         ash: 8.5,
-        hydrogen: 4.5
+        hydrogen: 4.5,
+        carbon: 55.2
     },
 
     groundnut: {
@@ -333,7 +334,8 @@ const fuels = {
         gcv: 4516.67,
         moisture: 7,
         ash: 6,
-        hydrogen: 6.5
+        hydrogen: 6.5,
+        carbon: 46.0
     },
 
     rice: {
@@ -341,7 +343,8 @@ const fuels = {
         gcv: 3241.11,
         moisture: 10,
         ash: 19,
-        hydrogen: 4.15
+        hydrogen: 4.15,
+        carbon: 37.5
     },
 
     mustard: {
@@ -349,7 +352,8 @@ const fuels = {
         gcv: 4222.22,
         moisture: 10,
         ash: 8,
-        hydrogen: 6
+        hydrogen: 6,
+        carbon: 45.0
     }
 
 };
@@ -625,7 +629,11 @@ function inputs() {
             getValue("feedHSlider"),
 
         capacity:
-            getValue("capacitySlider")
+            getValue("capacitySlider"),
+
+        carbon: currentFuel !== "custom" && fuels[currentFuel] ? (fuels[currentFuel].carbon || 0) : 0,
+        pressure: 0,
+        feedwaterTemp: 0
 
     };
 }
@@ -1249,6 +1257,7 @@ function syncReportFields(x, asReceivedGCV, calculatedNCV, steam) {
     }
 
     setValue("p2", asReceivedGCV.toFixed(0) + " / " + calculatedNCV.toFixed(0));
+    if (Number.isFinite(x.carbon) && x.carbon > 0) setValue("p3", x.carbon.toFixed(2));
     setValue("p4", x.hydrogen.toFixed(2));
     setValue("p5", x.moisture.toFixed(1));
     setValue("p6", x.ash.toFixed(1));

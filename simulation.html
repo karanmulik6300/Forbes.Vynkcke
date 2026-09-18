@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fuel &amp; Boiler Performance Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0c1620; --panel:#101d29; --ink:#eef3f7; --ink-soft:#7f92a3;
+  --rule:#22303d; --amber:#f5a623; --amber-bg:#1e1a10;
+  --blue:#3aa0ff; --blue-bg:#0f2438; --green:#3ecf8e; --green-bg:#0f231b;
+  --red:#ff6b6b; --red-bg:#2a1414; --field:#0a1219;
+}
+:root[data-theme="light"]{
+  --bg:#eef2f5; --panel:#ffffff; --ink:#12202c; --ink-soft:#5c6b78;
+  --rule:#d7dee4; --amber:#c97a10; --amber-bg:#fdf1de; --blue:#1470c4; --blue-bg:#eaf3fc;
+  --green:#1f9d64; --green-bg:#e9f8f0; --red:#c0392b; --red-bg:#fbeaea; --field:#ffffff;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Poppins",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.mono{font-family:"Roboto Mono",monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1220px;margin:0 auto;padding:22px 22px 70px}
+
+/* masthead */
+.mast{display:flex;flex-wrap:wrap;gap:18px;align-items:center;padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--rule)}
+.brand{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:16px 24px;display:flex;align-items:center;font-family:"Poppins",sans-serif;font-weight:700;font-size:1.5rem;letter-spacing:-.01em}
+.brand .b1{color:#3c3c3c} .brand .b2{color:#3d4b94}
+.mast h1{font-size:1.55rem;font-weight:600;margin:0 0 4px;letter-spacing:-.01em;position:relative;display:inline-block}
+.mast h1::after{content:"";position:absolute;left:0;bottom:-7px;width:46px;height:3px;background:var(--amber);border-radius:2px}
+.mast p{margin:10px 0 0;color:var(--ink-soft);font-size:.92rem}
+
+.tabs{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.tabs button{font:inherit;font-weight:500;font-size:.92rem;color:var(--ink);background:var(--panel);border:1px solid var(--rule);border-radius:8px;padding:11px 18px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.tabs button .badge{width:20px;height:20px;border-radius:50%;background:var(--rule);color:var(--ink);font-size:.72rem;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.tabs button[aria-selected="true"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.tabs button[aria-selected="true"] .badge{background:rgba(255,255,255,.25);color:#fff}
+.tabs button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* readout */
+.readout{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+@media (max-width:900px){.readout{grid-template-columns:1fr 1fr}}
+.cell{background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:16px 18px}
+.cell span{display:block;font-size:.72rem;color:var(--ink-soft);letter-spacing:.06em;text-transform:uppercase}
+.cell strong{display:block;font-family:"Roboto Mono",monospace;font-weight:500;font-size:1.9rem;margin-top:6px;line-height:1}
+.cell em{font-style:normal;font-size:.76rem;color:var(--ink-soft)}
+.amber strong{color:var(--amber)} .blue strong{color:var(--blue)} .green strong{color:var(--green)}
+
+/* mass balance strip */
+.balance{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:12px 18px;margin-bottom:18px;flex-wrap:wrap}
+.balance .pill{font-family:"Roboto Mono",monospace;font-weight:600;font-size:.85rem;padding:5px 12px;border-radius:20px}
+.pill.ok{background:var(--green-bg);color:var(--green)}
+.pill.bad{background:var(--red-bg);color:var(--red)}
+.balance .txt{font-size:.82rem;color:var(--ink-soft)}
+
+/* flow */
+.flow{display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--panel);border:1px solid var(--rule);border-radius:10px;padding:22px 26px;margin-bottom:20px}
+.flow .node{text-align:center;flex:1}
+.flow .ic{font-size:1.7rem;line-height:1;margin-bottom:6px}
+.flow b{display:block;font-size:.98rem;font-weight:600}
+.flow .sub{font-size:.78rem;color:var(--ink-soft);margin-top:3px}
+.flow .arrow{color:var(--ink-soft);font-size:1.3rem;flex:none}
+@media (max-width:640px){.flow{flex-direction:column}.flow .arrow{transform:rotate(90deg)}}
+
+/* layout */
+.cols{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+@media (max-width:900px){.cols{grid-template-columns:1fr}}
+.block{background:var(--panel);border:1px solid var(--rule);border-radius:10px;margin-bottom:18px;overflow:hidden}
+.block h2{margin:0;padding:16px 20px 12px;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--rule)}
+.step{width:22px;height:22px;border-radius:6px;background:var(--amber-bg);color:var(--amber);font-size:.75rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.block .body{padding:18px 20px}
+
+/* fuel buttons */
+.fuels{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.fuels{grid-template-columns:1fr}}
+.fuels button{font:inherit;font-weight:500;font-size:.9rem;color:var(--ink);background:var(--field);border:1.5px solid var(--rule);border-radius:8px;padding:11px 13px;cursor:pointer;text-align:left}
+.fuels button .r{display:block;font-size:.72rem;color:var(--ink-soft);font-weight:400;margin-top:2px}
+.fuels button[aria-pressed="true"]{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber);color:var(--amber)}
+.fuels button:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.hint{font-size:.78rem;color:var(--ink-soft);margin:10px 0 0}
+
+/* elemental grid */
+.elgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px}
+@media (max-width:480px){.elgrid{grid-template-columns:1fr}}
+.field label{display:flex;justify-content:space-between;align-items:baseline;font-size:.85rem;color:var(--ink);margin-bottom:3px;font-weight:500}
+.field .unit{font-size:.75rem;color:var(--ink-soft);font-weight:400}
+.field .def{font-size:.74rem;color:var(--ink-soft);margin:0 0 7px}
+input[type=number],input[type=date],input[type=text],select{width:100%;font:inherit;font-size:.92rem;color:var(--ink);background:var(--field);border:1px solid var(--rule);border-radius:7px;padding:9px 11px}
+input:focus,select:focus{outline:2px solid var(--blue);outline-offset:-1px;border-color:var(--blue)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+@media (max-width:480px){.grid2{grid-template-columns:1fr}}
+
+/* formula */
+.formula{font-size:.85rem;line-height:2;color:var(--ink-soft)}
+.formula code{font-family:"Roboto Mono",monospace;color:var(--amber);font-size:.86rem}
+
+/* chart */
+.chartbox{padding:6px 14px 8px}
+svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:18px;font-size:.78rem;color:var(--ink-soft);padding:0 20px 16px}
+.key{display:inline-block;width:14px;height:3px;vertical-align:middle;margin-right:6px;border-radius:2px}
+
+/* tables */
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:480px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font-weight:600;font-size:.74rem;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+td.n{font-family:"Roboto Mono",monospace;text-align:right}
+tbody tr:last-child td{border-bottom:0}
+table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
+.sn{width:30px;color:var(--ink-soft)}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;padding:16px 20px;border-top:1px solid var(--rule)}
+.btn{font:inherit;font-size:.88rem;font-weight:500;padding:10px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--rule);background:var(--field);color:var(--ink)}
+.btn.go{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.warn{border-color:#7a3b1e;color:#e28a4d}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.icon{border:0;background:none;color:var(--ink-soft);cursor:pointer;font:inherit;font-size:.8rem;padding:2px 6px}
+.icon:hover{color:var(--amber)}
+
+.glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;font-size:.83rem}
+@media (max-width:480px){.glossary{grid-template-columns:1fr}}
+.glossary dt{font-weight:600;color:var(--ink)}
+.glossary dd{margin:2px 0 0;color:var(--ink-soft);line-height:1.5}
+
+.note{background:var(--amber-bg);border:1px solid #4a3a1a;border-radius:8px;padding:12px 14px;font-size:.82rem;color:var(--ink-soft);line-height:1.6}
+:root[data-theme="light"] .note{border-color:#e6c98a}
+
+[hidden]{display:none !important}
+@media print{.tabs,.actions,.icon{display:none}body{background:#fff;color:#000}.block{break-inside:avoid;border-color:#ccc}}
+
+/* Fire hero: the YouTube video is a background layer only. The overlay keeps the player itself out of view. */
+.fire-hero{position:relative;min-height:330px;border:1px solid var(--rule);border-radius:14px;overflow:hidden;margin-bottom:22px;background:#090f14;isolation:isolate;display:flex;align-items:center;justify-content:center;text-align:center}
+.fire-hero iframe{position:absolute;inset:-8%;width:116%;height:116%;border:0;z-index:-2;pointer-events:none;transform:scale(1.08)}
+.fire-hero::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,10,15,.90),rgba(4,10,15,.38),rgba(4,10,15,.88));z-index:-1}
+.fire-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.35),rgba(0,0,0,.12) 45%,rgba(0,0,0,.65));z-index:-1}
+.fire-hero-content{position:relative;z-index:2;padding:55px 22px;max-width:950px;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.65)}
+.fire-hero-kicker{font-size:.8rem;letter-spacing:.48em;color:#ffd18a;text-transform:uppercase;font-weight:600;margin-bottom:12px}
+.fire-hero h2{margin:0;font-size:clamp(2.2rem,6vw,4.8rem);line-height:1.02;letter-spacing:.05em;font-weight:700}
+.fire-hero p{margin:16px auto 0;font-size:clamp(.9rem,1.7vw,1.1rem);letter-spacing:.22em;text-transform:uppercase;color:#f3f5f7}
+@media(max-width:640px){.fire-hero{min-height:270px}.fire-hero-content{padding:42px 18px}.fire-hero-kicker{letter-spacing:.28em}.fire-hero p{letter-spacing:.12em}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <section class="fire-hero" aria-label="Fuel simulation introduction">
+    <iframe src="https://www.youtube-nocookie.com/embed/8FeCmr1jAf4?autoplay=1&mute=1&loop=1&playlist=8FeCmr1jAf4&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1" title="Fire background video" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" tabindex="-1"></iframe>
+    <div class="fire-hero-content">
+      <div class="fire-hero-kicker">Fuel to Steam Ratio</div>
+      <h2>FUEL SIMULATION</h2>
+      <p>Optimise fuel. Maximise efficiency.</p>
+    </div>
+  </section>
+
+
+  <div class="mast">
+    <div class="brand"><span class="b1">forbes</span><span class="b2">vyncke</span></div>
+    <div>
+      <h1>Fuel &amp; Boiler Performance Simulator</h1>
+      <p>Ultimate-analysis based GCV/NCV, steam-to-fuel ratio and fuel consumption for industrial boilers</p>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="t1" aria-selected="true" aria-controls="p1"><span class="badge">1</span>Simulation</button>
+    <button role="tab" id="t2" aria-selected="false" aria-controls="p2"><span class="badge">2</span>Additional boiler parameters</button>
+  </div>
+
+  <!-- ================= SIMULATION ================= -->
+  <section id="p1" role="tabpanel" aria-labelledby="t1">
+
+    <div class="readout">
+      <div class="cell amber"><span>GCV, as received</span><strong id="oGcv">—</strong><em>kcal/kg · Dulong's formula</em></div>
+      <div class="cell amber"><span>NCV, as received</span><strong id="oNcv">—</strong><em>kcal/kg</em></div>
+      <div class="cell blue"><span>Steam / fuel</span><strong id="oSf">—</strong><em>t steam / t fuel</em></div>
+      <div class="cell green"><span>Fuel required</span><strong id="oFuel">—</strong><em>TPH</em></div>
+    </div>
+
+    <div class="balance">
+      <span class="pill" id="balPill">— %</span>
+      <span class="txt" id="balTxt">C + H + O + N + S + Moisture + Ash should add up to 100% of the as-received fuel. Fix this first — every downstream number depends on it.</span>
+    </div>
+
+    <div class="flow">
+      <div class="node"><div class="ic">🔥</div><b id="fFuelName">Indonesian coal</b><div class="sub" id="fFuel">Moisture — | Ash —</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ic">⚙️</div><b>Boiler</b><div class="sub" id="fEff">— efficiency</div></div>
+      <div class="arrow">→</div>
+      <div class="node"><div class="ic">♨️</div><b>Steam</b><div class="sub" id="fSteam">— TPH target</div></div>
+    </div>
+
+    <div class="cols">
+      <div>
+        <div class="block">
+          <h2><span class="step">1</span>Fuel selection</h2>
+          <div class="body">
+            <div class="fuels" id="fuels"></div>
+            <p class="hint" id="presetNote"></p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">2</span>Ultimate &amp; proximate analysis — as received</h2>
+          <div class="body">
+            <div class="elgrid">
+              <div class="field">
+                <label for="C">Carbon (C)<span class="unit">%</span></label>
+                <p class="def">The main heat-producing element.</p>
+                <input type="number" id="C" step="0.1" min="0" max="90">
+              </div>
+              <div class="field">
+                <label for="H">Hydrogen (H)<span class="unit">%</span></label>
+                <p class="def">Burns hot, but forms water vapour that carries heat away.</p>
+                <input type="number" id="H" step="0.1" min="0" max="15">
+              </div>
+              <div class="field">
+                <label for="O">Oxygen (O)<span class="unit">%</span></label>
+                <p class="def">Already combined in the fuel — reduces usable heat.</p>
+                <input type="number" id="O" step="0.1" min="0" max="55">
+              </div>
+              <div class="field">
+                <label for="N">Nitrogen (N)<span class="unit">%</span></label>
+                <p class="def">Inert. Passes through without releasing heat.</p>
+                <input type="number" id="N" step="0.05" min="0" max="5">
+              </div>
+              <div class="field">
+                <label for="S">Sulphur (S)<span class="unit">%</span></label>
+                <p class="def">Minor heat contributor; watch for SOx and corrosion.</p>
+                <input type="number" id="S" step="0.05" min="0" max="8">
+              </div>
+              <div class="field">
+                <label for="moist">Moisture (M)<span class="unit">%</span></label>
+                <p class="def">Water in the fuel. Evaporating it wastes heat.</p>
+                <input type="number" id="moist" step="0.5" min="0" max="65">
+              </div>
+              <div class="field">
+                <label for="ash">Ash<span class="unit">%</span></label>
+                <p class="def">Non-combustible mineral residue left after burning.</p>
+                <input type="number" id="ash" step="0.5" min="0" max="45">
+              </div>
+            </div>
+            <p class="hint">These seven parameters come from the fuel's Ultimate &amp; Proximate Analysis report and must add up to 100%. Presets load typical Indian-industry reference values — always replace them with your actual lab report before quoting a customer, since real fuel varies by source, season and moisture handling.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">3</span>Boiler conditions</h2>
+          <div class="body grid2">
+            <div><label class="hint" for="eff" style="margin:0 0 8px;color:var(--ink);font-weight:500">Boiler efficiency (%)</label><input type="number" id="eff" value="82" step="0.5" min="30" max="95"></div>
+            <div><label class="hint" for="load" style="margin:0 0 8px;color:var(--ink);font-weight:500">Target capacity (TPH)</label><input type="number" id="load" value="10" step="0.5" min="0.5"></div>
+            <div><label class="hint" for="hs" style="margin:0 0 8px;color:var(--ink);font-weight:500">Steam enthalpy (kJ/kg)</label><input type="number" id="hs" value="2780" step="10"></div>
+            <div><label class="hint" for="hf" style="margin:0 0 8px;color:var(--ink);font-weight:500">Feedwater enthalpy (kJ/kg)</label><input type="number" id="hf" value="440" step="10"></div>
+          </div>
+          <div class="body" style="padding-top:0">
+            <p class="hint">Defaults are for roughly 10.5 kg/cm² saturated steam and 105°C feedwater. Change these to match your boiler's actual operating pressure and feedwater temperature — enthalpy values come from standard steam tables.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">4</span>Combustion air &amp; efficiency check — heat loss method</h2>
+          <div class="body">
+            <p class="hint" style="margin:0 0 12px">The efficiency in Step 3 is usually an assumed figure. If you have a flue-gas temperature and an excess-air reading from site, use this to work out the actual efficiency and combustion air demand — the same heat-loss method used in a field boiler trial (BEE / IS 8753).</p>
+            <div class="grid2">
+              <div><label class="hint" for="exAir" style="margin:0 0 8px;color:var(--ink);font-weight:500">Excess air supplied (%)</label><input type="number" id="exAir" value="30" step="5" min="0" max="150"></div>
+              <div><label class="hint" for="tf" style="margin:0 0 8px;color:var(--ink);font-weight:500">Flue gas temperature (°C)</label><input type="number" id="tf" value="200" step="5" min="60" max="400"></div>
+              <div><label class="hint" for="ta" style="margin:0 0 8px;color:var(--ink);font-weight:500">Ambient temperature (°C)</label><input type="number" id="ta" value="30" step="1" min="0" max="50"></div>
+              <div><label class="hint" for="l5" style="margin:0 0 8px;color:var(--ink);font-weight:500">Radiation &amp; unburnt losses (%)</label><input type="number" id="l5" value="2" step="0.5" min="0" max="10"></div>
+            </div>
+          </div>
+          <div class="scroll">
+            <table>
+              <tbody>
+                <tr><td>Theoretical (stoichiometric) air</td><td class="n" id="oTA">—</td></tr>
+                <tr><td>Actual air supplied</td><td class="n" id="oAA">—</td></tr>
+                <tr><td>Dry flue gas, per kg fuel</td><td class="n" id="oFG">—</td></tr>
+                <tr><td>L1 — dry flue gas loss</td><td class="n" id="oL1">—</td></tr>
+                <tr><td>L2 — loss from H₂ in fuel</td><td class="n" id="oL2">—</td></tr>
+                <tr><td>L3 — loss from moisture in fuel</td><td class="n" id="oL3">—</td></tr>
+                <tr><td>L4 — loss from moisture in air</td><td class="n" id="oL4">—</td></tr>
+                <tr><td>L5 — radiation &amp; unburnt</td><td class="n" id="oL5">—</td></tr>
+                <tr><td><strong>Efficiency, indirect method</strong></td><td class="n" id="oEffCalc"><strong>—</strong></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <button class="btn go" id="applyEff">Use this efficiency in Step 3 →</button>
+          </div>
+          <div class="body" style="padding-top:0">
+            <p class="hint">Assumes flue gas Cp 0.23 kcal/kg°C, steam Cp 0.45 kcal/kg°C, latent heat 584 kcal/kg, and air humidity 0.016 kg water/kg dry air — standard heat-loss-method values. L5 (radiation and unburnt fuel loss) can't be worked out from a formula; 2% is typical for a well-maintained boiler, but take it from the manufacturer's IBR curve if you have it.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">⚡</span>NCV effect on steam / fuel ratio</h2>
+          <div class="chartbox" id="chartbox"></div>
+          <div class="legend">
+            <span><i class="key" style="background:var(--amber)"></i>NCV, kcal/kg</span>
+            <span><i class="key" style="background:var(--blue)"></i>Steam / fuel, t/t</span>
+          </div>
+          <div class="body" style="padding-top:0">
+            <p class="hint">This holds your fuel's dry-basis composition fixed and only varies moisture, so it shows what happens if the same fuel arrives wetter or drier — not a different fuel.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">5</span>Boiler capacity matrix</h2>
+          <div class="scroll">
+            <table>
+              <thead><tr><th class="sn">Sr.</th><th>Steam capacity</th><th style="text-align:right">Fuel required</th><th style="text-align:right">Ash generated</th><th style="text-align:right">Fuel cost / hr</th><th style="text-align:right">CO₂ / hr</th><th></th></tr></thead>
+              <tbody id="matrix"></tbody>
+            </table>
+          </div>
+          <div class="actions">
+            <input type="number" id="newLoad" placeholder="TPH" step="0.5" min="0.5" style="max-width:110px">
+            <button class="btn" id="addLoad">+ Add capacity</button>
+            <button class="btn warn" id="resetSim">Reset</button>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2><span class="step">6</span>Running cost &amp; CO₂</h2>
+          <div class="body grid2">
+            <div><label class="hint" for="fuelCost" style="margin:0 0 8px;color:var(--ink);font-weight:500">Fuel cost (₹ / tonne)</label><input type="number" id="fuelCost" value="6000" step="100" min="0"></div>
+            <div><label class="hint" for="opHrs" style="margin:0 0 8px;color:var(--ink);font-weight:500">Operating hours / day</label><input type="number" id="opHrs" value="24" step="1" min="1" max="24"></div>
+            <div><label class="hint" for="opDays" style="margin:0 0 8px;color:var(--ink);font-weight:500">Operating days / month</label><input type="number" id="opDays" value="26" step="1" min="1" max="31"></div>
+          </div>
+          <div class="scroll">
+            <table>
+              <tbody>
+                <tr><td>Cost per tonne of steam</td><td class="n" id="cSteam">—</td></tr>
+                <tr><td>Fuel cost per hour, at target load</td><td class="n" id="cHour">—</td></tr>
+                <tr><td>Fuel cost per day</td><td class="n" id="cDay">—</td></tr>
+                <tr><td>Fuel cost per month</td><td class="n" id="cMonth">—</td></tr>
+                <tr><td>CO₂ generated, per tonne fuel</td><td class="n" id="co2Fuel">—</td></tr>
+                <tr><td>CO₂ generated, per tonne steam</td><td class="n" id="co2Steam">—</td></tr>
+                <tr><td>CO₂ generated, per day</td><td class="n" id="co2Day">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="body" style="padding-top:0">
+            <p class="hint">CO₂ is worked out from the fuel's carbon content only (C × 44/12) — it doesn't include grid electricity for fans and pumps, so treat it as the direct combustion figure, not a full carbon footprint.</p>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="block">
+          <h2>Calculation</h2>
+          <div class="body formula">
+            <code>GCV(AR) = 1/100 × [8080C + 34500(H − O/8) + 2240S]</code><br>
+            <code>NCV(AR) = GCV(AR) − 587 × [9×(H/100) + M/100]</code><br>
+            <code>Steam/Fuel = NCV × 4.1868 × Efficiency ÷ (Steam Enthalpy − Feedwater Enthalpy)</code><br>
+            <code>Fuel Required = Target Steam Capacity ÷ Steam/Fuel Ratio</code>
+            <p class="hint" style="margin-top:10px">GCV uses Dulong's formula on the as-received ultimate analysis. The 587 kcal/kg NCV deduction is the latent heat carried away by moisture and by the water formed when hydrogen burns. 4.1868 converts kcal to kJ.</p>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2>Reading</h2>
+          <div class="body">
+            <table>
+              <tbody>
+                <tr><td>Heat to steam</td><td class="n" id="rHeat">—</td></tr>
+                <tr><td>Fuel energy input</td><td class="n" id="rIn">—</td></tr>
+                <tr><td>Fuel per steam tonne</td><td class="n" id="rFs">—</td></tr>
+                <tr><td>Ash generated / day</td><td class="n" id="rAsh">—</td></tr>
+                <tr><td>Fuel per 24 h</td><td class="n" id="rDay">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="block">
+          <h2>New to this? Start here</h2>
+          <div class="body">
+            <dl class="glossary">
+              <dt>GCV</dt><dd>Total heat released if all moisture ends up as liquid water.</dd>
+              <dt>NCV</dt><dd>Usable heat — moisture and combustion water leave as vapour instead, so this is always lower than GCV.</dd>
+              <dt>Steam/Fuel</dt><dd>How many tonnes of steam you get per tonne of fuel burned.</dd>
+              <dt>As received</dt><dd>The fuel exactly as it's weighed at the plant, moisture included.</dd>
+              <dt>Excess air</dt><dd>Air supplied above the bare minimum needed to burn the fuel completely — some extra is always needed so nothing goes unburnt.</dd>
+              <dt>Theoretical air</dt><dd>The bare minimum air the fuel's chemistry needs to burn completely, with zero extra.</dd>
+              <dt>Dry flue gas</dt><dd>The hot gas leaving the chimney, not counting the water vapour in it — this is what carries away the biggest single heat loss.</dd>
+              <dt>L1–L5 losses</dt><dd>The five ways a boiler loses heat: hot flue gas, water vapour from hydrogen, moisture in the fuel, moisture in the air, and radiation/unburnt fuel. Efficiency is 100% minus all five added up.</dd>
+              <dt>Indirect efficiency</dt><dd>Efficiency worked out from measured losses, as done in a real field trial — more trustworthy than a number typed in from memory.</dd>
+              <dt>CO₂ per tonne fuel</dt><dd>How much carbon dioxide burning one tonne of this fuel releases, based on its carbon content alone.</dd>
+            </dl>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ================= ASSESSMENT ================= -->
+  <section id="p2" role="tabpanel" aria-labelledby="t2" hidden>
+    <div class="block" style="margin-top:4px">
+      <h2>Project information</h2>
+      <div class="body grid2">
+        <div><label class="hint" style="margin:0 0 8px;color:var(--ink);font-weight:500" for="site">Site / customer</label><input id="site" data-save placeholder="Plant name"></div>
+        <div><label class="hint" style="margin:0 0 8px;color:var(--ink);font-weight:500" for="engr">Engineer</label><input id="engr" data-save placeholder="Your name"></div>
+        <div><label class="hint" style="margin:0 0 8px;color:var(--ink);font-weight:500" for="visit">Visit date</label><input type="date" id="visit" data-save></div>
+        <div><label class="hint" style="margin:0 0 8px;color:var(--ink);font-weight:500" for="boilerid">Boiler tag</label><input id="boilerid" data-save placeholder="BLR-01"></div>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Operational &amp; performance parameters</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th class="sn">SN</th><th style="width:32%">Parameter</th><th>Value</th><th style="width:22%">Remarks</th></tr></thead>
+          <tbody id="params"></tbody>
+        </table>
+      </div>
+      <div class="actions">
+        <button class="btn go" id="save">Save / print report</button>
+        <button class="btn" id="print">Print</button>
+        <button class="btn warn" id="clear">Reset</button>
+        <span class="hint" id="saveMsg" style="align-self:center"></span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------- fuel presets (Indian-industry typical reference values) ----------------
+   These are typical published ranges for common industrial boiler fuels in India — a
+   starting point, not a substitute for an actual Ultimate & Proximate Analysis report. */
+const FUELS = [
+  {n:"Indonesian coal",     range:"GCV typically 5,500–5,700 kcal/kg · imported 5500 GAR grade steam coal",
+   C:55.2, H:4.0, O:5.8, N:1.0, S:0.5, M:23.0, A:10.5},
+  {n:"Groundnut shell briquette", range:"GCV typically 4,200–4,700 kcal/kg",
+   C:46.0, H:5.5, O:29.0, N:0.4, S:0.1, M:9.0, A:10.0},
+  {n:"Rice husk",           range:"GCV typically 3,000–3,500 kcal/kg · high silica ash",
+   C:37.5, H:4.5, O:27.5, N:0.4, S:0.1, M:10.0, A:20.0},
+  {n:"Mustard husk briquette", range:"GCV typically 4,200–4,700 kcal/kg",
+   C:45.0, H:5.5, O:30.5, N:0.4, S:0.1, M:9.0, A:9.5},
+  {n:"Bagasse",             range:"GCV typically 1,900–2,300 kcal/kg fresh · ~45–50% moisture as milled",
+   C:25.0, H:3.1, O:23.7, N:0.2, S:0.05, M:45.0, A:2.95},
+  {n:"Wood chips",          range:"GCV typically 2,600–3,000 kcal/kg · ~35% moisture as delivered",
+   C:31.8, H:3.8, O:27.6, N:0.25, S:0.05, M:35.0, A:1.5}
+];
+let active = 0;
+
+const $ = id => document.getElementById(id);
+const F = {C:$("C"), H:$("H"), O:$("O"), N:$("N"), S:$("S"), moist:$("moist"), ash:$("ash"),
+           eff:$("eff"), load:$("load"), hs:$("hs"), hf:$("hf"),
+           exAir:$("exAir"), tf:$("tf"), ta:$("ta"), l5:$("l5"),
+           fuelCost:$("fuelCost"), opHrs:$("opHrs"), opDays:$("opDays")};
+const num = id => parseFloat(F[id].value) || 0;
+const fmt = (v, d=0) => (isFinite(v) && v > 0) ? v.toLocaleString("en-IN",{minimumFractionDigits:d, maximumFractionDigits:d}) : "—";
+
+/* ---------------- core physics ---------------- */
+// Dulong's formula on the as-received ultimate analysis (C,H,O,S in %).
+function gcvDulong(C,H,O,S){
+  return (8080*C + 34500*(H - O/8) + 2240*S) / 100;
+}
+function ncvFromGcv(gcv,H,M){
+  return gcv - 587*(9*(H/100) + M/100);
+}
+function steamFuel(ncv, eff, hs, hf){
+  const dh = hs - hf;
+  return (dh > 0 && ncv > 0) ? (ncv * 4.1868 * (eff/100)) / dh : 0;
+}
+
+/* ---------------- fuel buttons ---------------- */
+const fuelBar = $("fuels");
+function loadPreset(i){
+  active = i;
+  const f = FUELS[i];
+  F.C.value=f.C; F.H.value=f.H; F.O.value=f.O; F.N.value=f.N; F.S.value=f.S;
+  F.moist.value=f.M; F.ash.value=f.A;
+  [...fuelBar.children].forEach((c,j) => c.setAttribute("aria-pressed", j === i));
+  $("presetNote").textContent = f.range + " — Indian-industry reference. Verify against your fuel's actual lab report.";
+  run();
+}
+FUELS.forEach((f,i) => {
+  const b = document.createElement("button");
+  b.innerHTML = f.n + `<span class="r">${f.range.split(" · ")[0]}</span>`;
+  b.setAttribute("aria-pressed", i === active);
+  b.onclick = () => loadPreset(i);
+  fuelBar.appendChild(b);
+});
+const customBtn = document.createElement("button");
+customBtn.innerHTML = "+ Custom fuel<span class=\"r\">Enter your own lab report</span>";
+customBtn.onclick = () => {
+  active = -1;
+  [...fuelBar.children].forEach(c => c.setAttribute("aria-pressed","false"));
+  customBtn.setAttribute("aria-pressed","true");
+  $("presetNote").textContent = "Enter the Ultimate & Proximate Analysis values from your fuel test report below.";
+  run();
+};
+fuelBar.appendChild(customBtn);
+Object.values(F).forEach(el => el.addEventListener("input", () => {
+  if (["C","H","O","N","S","moist","ash"].includes(el.id)) {
+    active = -1;
+    [...fuelBar.children].forEach(c => c.setAttribute("aria-pressed","false"));
+    customBtn.setAttribute("aria-pressed","true");
+  }
+  run();
+}));
+
+/* ---------------- mass balance check ---------------- */
+function checkBalance(){
+  const total = num("C")+num("H")+num("O")+num("N")+num("S")+num("moist")+num("ash");
+  const pill = $("balPill"), txt = $("balTxt");
+  pill.textContent = total.toFixed(2) + "%";
+  const off = Math.abs(total - 100);
+  if (off <= 0.3){
+    pill.className = "pill ok";
+    txt.textContent = "Mass balance checks out — C, H, O, N, S, moisture and ash add up to 100% of the as-received fuel.";
+  } else {
+    pill.className = "pill bad";
+    txt.textContent = `Off by ${off.toFixed(2)} percentage points. Adjust the values below until they total 100% — the GCV/NCV figures are not reliable until they do.`;
+  }
+  return off <= 0.3;
+}
+
+/* ---------------- capacity matrix ---------------- */
+let loads = [5, 8, 10, 12, 15];
+function drawMatrix(sf, ashPct, costPerT, co2PerFuelT){
+  const tb = $("matrix");
+  tb.innerHTML = "";
+  loads.slice().sort((a,b)=>a-b).forEach((L,i) => {
+    const fuel = sf > 0 ? L / sf : 0;          // TPH
+    const ashTph = fuel * (ashPct||0) / 100;
+    const costHr = fuel * 1000 * (costPerT||0);
+    const co2Hr = fuel * (co2PerFuelT||0);      // fuel(t/hr) × kg CO2/tonne fuel = kg/hr
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td class="sn mono">${i+1}</td><td>${L} TPH</td>
+      <td class="n">${fmt(fuel,2)} TPH</td>
+      <td class="n">${fmt(ashTph,3)} TPH</td>
+      <td class="n">${costHr>0 ? "₹ "+fmt(costHr,0) : "—"}</td>
+      <td class="n">${co2Hr>0 ? fmt(co2Hr,0)+" kg" : "—"}</td>
+      <td style="text-align:right"><button class="icon" aria-label="Remove ${L} TPH row">Remove</button></td>`;
+    tr.querySelector("button").onclick = () => { loads = loads.filter(x => x !== L); run(); };
+    tb.appendChild(tr);
+  });
+}
+$("addLoad").onclick = () => {
+  const v = parseFloat($("newLoad").value);
+  if (v > 0 && !loads.includes(v)) { loads.push(v); $("newLoad").value = ""; run(); }
+};
+$("resetSim").onclick = () => {
+  loads = [5,8,10,12,15];
+  F.eff.value = 82; F.load.value = 10; F.hs.value = 2780; F.hf.value = 440;
+  loadPreset(0);
+};
+
+/* ---------------- moisture chart ----------------
+   Holds the fuel's DRY-basis composition fixed (C,H,O,N,S,Ash normalised to the
+   dry fraction) and scales it down as test moisture increases, exactly like a real
+   fuel does when it picks up or loses water — not a different material. */
+function drawChart(){
+  const W = 640, H = 220, PL = 50, PR = 50, PT = 14, PB = 28;
+  const M0 = num("moist");
+  const dryFrac = 100 - M0;
+  if (dryFrac <= 0){ $("chartbox").innerHTML = ""; return; }
+  const dry = {
+    C: num("C")/dryFrac*100, H: num("H")/dryFrac*100, O: num("O")/dryFrac*100,
+    S: num("S")/dryFrac*100
+  };
+  const eff = num("eff"), hs = num("hs"), hf = num("hf");
+  const pts = [];
+  for (let m = 0; m <= 60; m += 2){
+    const scale = (100 - m) / 100;
+    const C=dry.C*scale, Hh=dry.H*scale, O=dry.O*scale, S=dry.S*scale;
+    const gcv = Math.max(0, gcvDulong(C,Hh,O,S));
+    const ncv = Math.max(0, ncvFromGcv(gcv,Hh,m));
+    const sf = steamFuel(ncv, eff, hs, hf);
+    pts.push({m, ncv, sf});
+  }
+  const maxN = Math.max(...pts.map(p => p.ncv), 1);
+  const maxS = Math.max(...pts.map(p => p.sf), 1);
+  const x = m => PL + (m/60) * (W - PL - PR);
+  const yN = v => H - PB - (v/maxN) * (H - PT - PB);
+  const yS = v => H - PB - (v/maxS) * (H - PT - PB);
+  const line = (sel, yf) => pts.map(p => `${x(p.m).toFixed(1)},${yf(sel(p)).toFixed(1)}`).join(" ");
+  const gridX = [0,15,30,45,60].map(m =>
+    `<line x1="${x(m)}" y1="${PT}" x2="${x(m)}" y2="${H-PB}" stroke="var(--rule)" stroke-width="1"/>
+     <text x="${x(m)}" y="${H-9}" fill="var(--ink-soft)" font-size="11" text-anchor="middle">${m}%</text>`).join("");
+  const cur = Math.min(60, Math.max(0, M0));
+  const curScale = (100-cur)/100;
+  const curGcv = Math.max(0, gcvDulong(dry.C*curScale, dry.H*curScale, dry.O*curScale, dry.S*curScale));
+  const curNcv = Math.max(0, ncvFromGcv(curGcv, dry.H*curScale, cur));
+  const curSf = steamFuel(curNcv, eff, hs, hf);
+
+  $("chartbox").innerHTML = `
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Net calorific value and steam to fuel ratio plotted against fuel moisture from 0 to 60 percent">
+    ${gridX}
+    <line x1="${PL}" y1="${H-PB}" x2="${W-PR}" y2="${H-PB}" stroke="var(--rule)" stroke-width="1"/>
+    <polyline fill="none" stroke="var(--amber)" stroke-width="2.5" points="${line(p=>p.ncv, yN)}"/>
+    <polyline fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-dasharray="5 4" points="${line(p=>p.sf, yS)}"/>
+    <line x1="${x(cur)}" y1="${PT}" x2="${x(cur)}" y2="${H-PB}" stroke="var(--ink-soft)" stroke-width="1" stroke-dasharray="2 3"/>
+    <circle cx="${x(cur)}" cy="${yN(curNcv)}" r="4" fill="var(--amber)"/>
+    <circle cx="${x(cur)}" cy="${yS(curSf)}" r="4" fill="var(--blue)"/>
+    <text x="4" y="${PT+10}" fill="var(--amber)" font-size="11">${Math.round(maxN)}</text>
+    <text x="4" y="${H-PB}" fill="var(--ink-soft)" font-size="11">0</text>
+    <text x="${W-44}" y="${PT+10}" fill="var(--blue)" font-size="11">${maxS.toFixed(1)}</text>
+  </svg>`;
+}
+
+/* ---------------- combustion air & heat-loss-method efficiency ---------------- */
+function combustionAndEfficiency(C,Hh,O,S,M,gcv,balanced){
+  const EA = num("exAir"), Tf = num("tf"), Ta = num("ta"), L5 = num("l5");
+  const TA = (11.6*C + 34.8*(Hh - O/8) + 4.35*S) / 100;           // theoretical air, kg/kg fuel
+  const AA = TA * (1 + EA/100);                                    // actual air supplied, kg/kg fuel
+  const m  = AA + 1 - (9*Hh + M)/100;                               // dry flue gas, kg/kg fuel
+  let L1=0,L2=0,L3=0,L4=0,effCalc=0;
+  const dT = Tf - Ta;
+  if (balanced && gcv > 0 && m > 0 && dT > 0){
+    L1 = m * 0.23 * dT / gcv * 100;
+    L2 = 9*(Hh/100) * (584 + 0.45*dT) / gcv * 100;
+    L3 = (M/100) * (584 + 0.45*dT) / gcv * 100;
+    L4 = AA * 0.016 * 0.45 * dT / gcv * 100;
+    effCalc = 100 - (L1+L2+L3+L4+L5);
+  }
+  $("oTA").textContent = fmt(TA,3) + " kg/kg fuel";
+  $("oAA").textContent = fmt(AA,3) + " kg/kg fuel";
+  $("oFG").textContent = fmt(m,3) + " kg/kg fuel";
+  $("oL1").textContent = balanced && dT>0 ? fmt(L1,2)+" %" : "—";
+  $("oL2").textContent = balanced && dT>0 ? fmt(L2,2)+" %" : "—";
+  $("oL3").textContent = balanced && dT>0 ? fmt(L3,2)+" %" : "—";
+  $("oL4").textContent = balanced && dT>0 ? fmt(L4,2)+" %" : "—";
+  $("oL5").textContent = fmt(L5,2)+" %";
+  $("oEffCalc").innerHTML = balanced && dT>0 && effCalc>0 ? "<strong>"+fmt(effCalc,1)+" %</strong>" : "<strong>—</strong>";
+  return effCalc;
+}
+let lastEffCalc = 0;
+$("applyEff").onclick = () => {
+  if (lastEffCalc > 0 && lastEffCalc <= 100){ F.eff.value = lastEffCalc.toFixed(1); run(); }
+};
+
+/* ---------------- running cost & CO2 ---------------- */
+function costAndEmissions(C, fuel, sf){
+  const cost = num("fuelCost"), hrs = num("opHrs"), days = num("opDays");
+  const costPerSteamT = sf > 0 ? cost / sf : 0;
+  const costPerHr = fuel * cost;                 // fuel TPH × ₹/tonne
+  const costPerDay = costPerHr * hrs;
+  const costPerMonth = costPerDay * days;
+  const co2PerFuelT = C/100 * 44/12 * 1000;       // kg CO2 per tonne fuel
+  const co2PerSteamT = sf > 0 ? co2PerFuelT / sf : 0;
+  const co2PerDay = fuel * hrs * (co2PerFuelT/1000); // tonnes/day
+
+  $("cSteam").textContent  = costPerSteamT>0 ? "₹ "+fmt(costPerSteamT,0) : "—";
+  $("cHour").textContent   = costPerHr>0 ? "₹ "+fmt(costPerHr,0) : "—";
+  $("cDay").textContent    = costPerDay>0 ? "₹ "+fmt(costPerDay,0) : "—";
+  $("cMonth").textContent  = costPerMonth>0 ? "₹ "+fmt(costPerMonth,0) : "—";
+  $("co2Fuel").textContent = co2PerFuelT>0 ? fmt(co2PerFuelT,0)+" kg" : "—";
+  $("co2Steam").textContent= co2PerSteamT>0 ? fmt(co2PerSteamT,0)+" kg" : "—";
+  $("co2Day").textContent  = co2PerDay>0 ? fmt(co2PerDay,2)+" t" : "—";
+}
+
+/* ---------------- recalculate ---------------- */
+function run(){
+  const balanced = checkBalance();
+  const C=num("C"), Hh=num("H"), O=num("O"), S=num("S"), M=num("moist"), Ash=num("ash");
+  const gcv = balanced ? Math.max(0, gcvDulong(C,Hh,O,S)) : 0;
+  const ncv = balanced ? Math.max(0, ncvFromGcv(gcv,Hh,M)) : 0;
+  const eff = num("eff"), hs = num("hs"), hf = num("hf"), load = num("load");
+  const sf = steamFuel(ncv, eff, hs, hf);
+  const fuel = sf > 0 ? load / sf : 0;
+
+  $("oGcv").textContent  = balanced ? fmt(gcv) : "—";
+  $("oNcv").textContent  = balanced ? fmt(ncv) : "—";
+  $("oSf").textContent   = balanced ? fmt(sf, 2) : "—";
+  $("oFuel").textContent = balanced ? fmt(fuel, 2) : "—";
+
+  $("fFuelName").textContent = active >= 0 ? FUELS[active].n : "Custom fuel";
+  $("fFuel").textContent = `Moisture ${M.toFixed(1)}% | Ash ${Ash.toFixed(1)}%`;
+  $("fEff").textContent = fmt(eff,0) + "% efficiency";
+  $("fSteam").textContent = fmt(load,1) + " TPH target";
+
+  const dh = hs - hf;
+  $("rHeat").textContent = fmt(load*1000*dh/3600, 0) + " kW";
+  $("rIn").textContent   = balanced ? fmt(fuel*1000*ncv*4.1868/3600, 0) + " kW" : "—";
+  $("rFs").textContent   = sf > 0 ? fmt(1/sf, 3) + " t/t" : "—";
+  $("rAsh").textContent  = fmt(fuel*24*Ash/100, 2) + " t";
+  $("rDay").textContent  = fmt(fuel*24, 1) + " t";
+
+  lastEffCalc = combustionAndEfficiency(C,Hh,O,S,M,gcv,balanced);
+  costAndEmissions(C, fuel, sf);
+  const costPerT = num("fuelCost");
+  const co2PerFuelT = C/100 * 44/12 * 1000; // kg CO2 per tonne fuel
+  drawMatrix(sf, Ash, costPerT, co2PerFuelT);
+  drawChart();
+}
+
+/* ---------------- assessment table ---------------- */
+const PARAMS = [
+  ["Primary fuel in use", "select", ["Indonesian coal","Rice husk","Groundnut shell briquette","Mustard husk briquette","Bagasse","Wood chips","Other"], ""],
+  ["GCV / NCV, kcal/kg", "text", null, "Linked to Page 1"],
+  ["Carbon, %", "number", null, "Ultimate analysis"],
+  ["Hydrogen, %", "number", null, "Ultimate analysis"],
+  ["Moisture, %", "number", null, "As received"],
+  ["Ash, %", "number", null, "As received"],
+  ["Secondary fuel, if any", "text", null, "Optional"],
+  ["Date of last fuel test", "date", null, "Ultimate & proximate"],
+  ["Operating pressure, kg/cm²", "number", null, ""],
+  ["Steam flow / load, TPH", "number", null, "Target load"],
+  ["Steam to fuel ratio achieved", "number", null, "t/t"],
+  ["Tube cleaning interval, days", "number", null, ""],
+  ["Operating hours per month", "number", null, ""],
+  ["Stack temperature, °C", "number", null, ""],
+  ["Chimney bottom cleaning, days", "number", null, ""],
+  ["Grate cleaning interval, days", "number", null, ""],
+  ["SPM, mg/Nm³", "number", null, ""],
+  ["SOx / NOx, ppm", "text", null, ""],
+  ["Dust collection", "select", ["Bag filter","Multi cyclone","ESP","None"], ""],
+  ["Efficiency, indirect method, %", "number", null, ""],
+  ["Ash handling system", "text", null, "Type and condition"],
+  ["Feedwater temperature, °C", "number", null, ""],
+  ["Feedwater tank", "select", ["Atmospheric","Pressurised"], ""],
+  ["Make-up water temperature, °C", "number", null, "Without steam injection"],
+  ["Water treatment / analysis", "text", null, ""],
+  ["Major operational issues", "text", null, ""],
+  ["Site observations", "text", null, ""],
+  ["Customer feedback", "text", null, ""]
+];
+const pbody = $("params");
+PARAMS.forEach((p, i) => {
+  const [name, type, opts, note] = p;
+  const id = "p" + i;
+  let field;
+  if (type === "select"){
+    field = `<select id="${id}" data-save><option value="">Select</option>` +
+            opts.map(o => `<option>${o}</option>`).join("") + `</select>`;
+  } else {
+    field = `<input type="${type}" id="${id}" data-save>`;
+  }
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td class="sn mono">${i+1}</td><td><label for="${id}" style="color:var(--ink)">${name}</label></td><td>${field}</td><td class="hint" style="margin:0">${note}</td>`;
+  pbody.appendChild(tr);
+});
+
+/* ---------------- save / restore ---------------- */
+const KEY = "boiler-assessment-v2";
+function save(){
+  const data = {};
+  document.querySelectorAll("[data-save]").forEach(el => { if (el.value) data[el.id] = el.value; });
+  try { localStorage.setItem(KEY, JSON.stringify(data)); msg("Saved on this device."); }
+  catch (e) { msg("This browser blocked saving. Use Print instead."); }
+}
+function restore(){
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    Object.keys(data).forEach(k => { const el = $(k); if (el) el.value = data[k]; });
+  } catch (e) { /* nothing stored yet */ }
+}
+function msg(t){ $("saveMsg").textContent = t; setTimeout(() => { $("saveMsg").textContent = ""; }, 3000); }
+$("save").onclick = save;
+$("print").onclick = () => window.print();
+$("clear").onclick = () => {
+  document.querySelectorAll("[data-save]").forEach(el => el.value = "");
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  msg("Entries cleared.");
+};
+
+/* ---------------- tabs ---------------- */
+document.querySelectorAll('[role=tab]').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('[role=tab]').forEach(t => {
+      const on = t === tab;
+      t.setAttribute("aria-selected", on);
+      $(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  };
+});
+
+restore();
+loadPreset(0);
+</script>
+</body>
+</html>
