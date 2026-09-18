@@ -225,16 +225,17 @@ function saveReportToDrive() {
 }
 
 // -----------------------------
-// 4-PAGE NAVIGATION
+// 5-PAGE NAVIGATION
 // -----------------------------
 
-const pageOrder = ["home", "about", "simulation", "analysis"];
+const pageOrder = ["home", "about", "simulation", "analysis", "summary"];
 
 const pageLabels = {
     home: "Home",
     about: "About",
     simulation: "Simulation",
-    analysis: "Analysis"
+    analysis: "Analysis",
+    summary: "Customer Summary"
 };
 
 function showPage(page) {
@@ -271,9 +272,10 @@ function showPage(page) {
     updatePageNavButtons(page);
 
     // Update simulation when entering Analysis
-    if (page === "analysis") {
+    if (page === "analysis" || page === "summary") {
         setTimeout(function () {
             updateSimulation();
+            if (page === "summary") renderCustomerSummaryPage();
         }, 50);
     }
 }
@@ -313,6 +315,28 @@ function goNextPage(button) {
     showPage(button.dataset.target);
 }
 
+
+
+function renderCustomerSummaryPage() {
+    const empty = document.getElementById("summaryEmpty");
+    const content = document.getElementById("summaryContent");
+    let raw = null;
+    try { raw = localStorage.getItem("forbesVynckeSimulation"); } catch (e) {}
+    if (!raw) { if (empty) empty.hidden = false; if (content) content.hidden = true; return; }
+    let d; try { d = JSON.parse(raw); } catch (e) { d = null; }
+    if (!d) { if (empty) empty.hidden = false; if (content) content.hidden = true; return; }
+    if (empty) empty.hidden = true; if (content) content.hidden = false;
+    const set=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+    set("siteEff", Number(d.eff).toFixed(1)); set("siteSteam", Number(d.load).toFixed(2)); set("siteSf", Number(d.sf).toFixed(2)); set("siteFuel", Number(d.fuel).toFixed(2));
+    set("siteGcv", Number(d.gcv).toFixed(0)+" kcal/kg"); set("siteNcv", Number(d.ncv).toFixed(0)+" kcal/kg");
+    set("siteCostSteam", d.costSteam>0 ? "₹ "+Math.round(d.costSteam).toLocaleString("en-IN") : "—");
+    set("siteCostHour", d.costHour>0 ? "₹ "+Math.round(d.costHour).toLocaleString("en-IN") : "—");
+    set("siteCostDay", d.costDay>0 ? "₹ "+Math.round(d.costDay).toLocaleString("en-IN") : "—");
+    set("siteCostMonth", d.costMonth>0 ? "₹ "+Math.round(d.costMonth).toLocaleString("en-IN") : "—");
+    set("siteCo2Steam", d.co2Steam>0 ? Number(d.co2Steam).toFixed(0)+" kg" : "—");
+    set("siteAshDay", Number(d.ashDay).toFixed(2)+" t");
+    set("siteStatement", Number(d.eff).toFixed(1)+"% efficiency • "+Number(d.load).toFixed(2)+" TPH steam flow • "+Number(d.sf).toFixed(2)+" t steam/t fuel • "+(d.costSteam>0 ? "₹ "+Math.round(d.costSteam).toLocaleString("en-IN") : "—")+" direct fuel cost per tonne of steam.");
+}
 
 // -----------------------------
 // FUEL DATABASE
@@ -1245,7 +1269,7 @@ function syncReportFields(x, asReceivedGCV, calculatedNCV, steam) {
     }
 
     setValue("p2", asReceivedGCV.toFixed(0) + " / " + calculatedNCV.toFixed(0));
-    setValue("p3", x.gcv > 0 ? "" : "");
+    setValue("p3", "");
     setValue("p4", x.hydrogen.toFixed(2));
     setValue("p5", x.moisture.toFixed(1));
     setValue("p6", x.ash.toFixed(1));
@@ -1625,7 +1649,7 @@ document.addEventListener(
 
         // Open the page requested via ?page=... if valid, otherwise Home
         const requestedPage = new URLSearchParams(window.location.search).get("page");
-        const validPages = ["home", "about", "analysis"];
+        const validPages = ["home", "about", "analysis", "summary"];
         showPage(validPages.includes(requestedPage) ? requestedPage : "home");
 
         // Initialize simulation

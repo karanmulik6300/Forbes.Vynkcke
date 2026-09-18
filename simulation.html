@@ -150,13 +150,18 @@ table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
       <h1>Fuel &amp; Boiler Performance Simulator</h1>
       <p>Ultimate-analysis based GCV/NCV, steam-to-fuel ratio and fuel consumption for industrial boilers</p>
     </div>
-    <a class="btn go" href="index.html?page=analysis" style="margin-left:auto;text-decoration:none">Analysis &amp; Report →</a>
+    <nav class="site-tabs" aria-label="Website pages" style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <a class="btn" href="index.html?page=home" style="text-decoration:none">Home</a>
+      <a class="btn" href="index.html?page=about" style="text-decoration:none">About</a>
+      <a class="btn go" href="simulation.html" style="text-decoration:none">Simulation</a>
+      <a class="btn" href="index.html?page=analysis" style="text-decoration:none">Analysis</a>
+      <a class="btn" href="index.html?page=summary" style="text-decoration:none">Customer Summary</a>
+    </nav>
   </div>
 
   <div class="tabs" role="tablist">
     <button role="tab" id="t1" aria-selected="true" aria-controls="p1"><span class="badge">1</span>Simulation</button>
     <button role="tab" id="t2" aria-selected="false" aria-controls="p2"><span class="badge">2</span>Additional boiler parameters</button>
-    <button role="tab" id="t3" aria-selected="false" aria-controls="p3"><span class="badge">3</span>Customer Summary</button>
   </div>
 
   <!-- ================= SIMULATION ================= -->
@@ -382,43 +387,6 @@ table input,table select{padding:6px 8px;font-size:.86rem;border-radius:6px}
         </div>
       </aside>
     </div>
-  </section>
-
-  <!-- ================= CUSTOMER SUMMARY ================= -->
-  <section id="p3" role="tabpanel" aria-labelledby="t3" hidden>
-    <div class="block" style="margin-top:4px">
-      <h2><span class="step">✓</span>Customer-ready final results</h2>
-      <div class="body">
-        <p class="hint" style="margin-top:0">All values below are calculated from the Simulation inputs. Use this page as the final customer discussion sheet.</p>
-        <div class="readout">
-          <div class="cell amber"><span>Boiler efficiency</span><strong id="finalEff">—</strong><em>%</em></div>
-          <div class="cell blue"><span>Steam flow / target</span><strong id="finalSteam">—</strong><em>TPH</em></div>
-          <div class="cell green"><span>Steam / fuel ratio</span><strong id="finalSf">—</strong><em>t/t</em></div>
-          <div class="cell amber"><span>Fuel required</span><strong id="finalFuel">—</strong><em>TPH</em></div>
-        </div>
-        <div class="scroll"><table><tbody>
-          <tr><td>GCV, as received</td><td class="n" id="finalGcv">—</td></tr>
-          <tr><td>NCV, as received</td><td class="n" id="finalNcv">—</td></tr>
-          <tr><td>Indirect efficiency from heat losses</td><td class="n" id="finalIndirectEff">—</td></tr>
-          <tr><td>Heat delivered to steam</td><td class="n" id="finalHeat">—</td></tr>
-          <tr><td>Fuel energy input</td><td class="n" id="finalEnergy">—</td></tr>
-          <tr><td>Fuel per tonne of steam</td><td class="n" id="finalFuelPerSteam">—</td></tr>
-          <tr><td>Steam cost / tonne</td><td class="n" id="finalCostSteam">—</td></tr>
-          <tr><td>Fuel cost / hour at target load</td><td class="n" id="finalCostHour">—</td></tr>
-          <tr><td>Fuel cost / day</td><td class="n" id="finalCostDay">—</td></tr>
-          <tr><td>Fuel cost / month</td><td class="n" id="finalCostMonth">—</td></tr>
-          <tr><td>CO₂ per tonne fuel</td><td class="n" id="finalCo2Fuel">—</td></tr>
-          <tr><td>CO₂ per tonne steam</td><td class="n" id="finalCo2Steam">—</td></tr>
-          <tr><td>CO₂ per day</td><td class="n" id="finalCo2Day">—</td></tr>
-          <tr><td>Ash generated / day</td><td class="n" id="finalAshDay">—</td></tr>
-          <tr><td>Theoretical air</td><td class="n" id="finalTA">—</td></tr>
-          <tr><td>Actual air supplied</td><td class="n" id="finalAA">—</td></tr>
-          <tr><td>Dry flue gas</td><td class="n" id="finalFG">—</td></tr>
-        </tbody></table></div>
-      </div>
-    </div>
-    <div class="block"><h2>Customer discussion</h2><div class="body"><div class="note">At the selected operating condition: <strong id="finalStatement">—</strong></div></div></div>
-    <div class="actions"><a class="btn" href="index.html?page=analysis" style="text-decoration:none">Open Analysis &amp; Site Assessment →</a><button class="btn go" onclick="window.print()">Print Customer Summary</button></div>
   </section>
 
   <!-- ================= ASSESSMENT ================= -->
@@ -730,6 +698,12 @@ function run(){
   lastEffCalc = combustionAndEfficiency(C,Hh,O,S,M,gcv,balanced);
   costAndEmissions(C, fuel, sf);
   updateCustomerSummary(C,Hh,O,S,M,Ash,gcv,ncv,eff,hs,hf,load,sf,fuel);
+  try {
+    const fuelCost=num("fuelCost"), hrs=num("opHrs"), days=num("opDays");
+    const costSteam=sf>0?fuelCost/sf:0, costHour=fuel*fuelCost, costDay=costHour*hrs, costMonth=costDay*days;
+    const co2Fuel=C/100*44/12*1000, co2Steam=sf>0?co2Fuel/sf:0, ashDay=fuel*24*Ash/100;
+    localStorage.setItem("forbesVynckeSimulation", JSON.stringify({eff,load,sf,fuel,gcv,ncv,costSteam,costHour,costDay,costMonth,co2Steam,ashDay}));
+  } catch(e) {}
   const costPerT = num("fuelCost");
   const co2PerFuelT = C/100 * 44/12 * 1000; // kg CO2 per tonne fuel
   drawMatrix(sf, Ash, costPerT, co2PerFuelT);
