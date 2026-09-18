@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Forbes Vyncke | Fuel & Boiler Simulation</title>
+<link rel="icon" type="image" href="logo.png">
+<link rel="stylesheet" href="styles.css">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+<header class="site-nav">
+  <div class="nav-inner">
+    <button onclick="showPage('home')" style="background:none;border:0;padding:0;cursor:pointer">
+      <img class="brand-img" src="forbesvyncke.jpg" alt="forbesvyncke" style="width:130px;max-height:48px;object-fit:contain">
+    </button>
+    <nav class="site-links">
+      <button data-page="home" onclick="showPage('home')">Home</button>
+      <button data-page="about" onclick="showPage('about')">About</button>
+      <button data-page="simulation" onclick="showPage('simulation')">Simulation</button>
+      <button data-page="analysis" onclick="showPage('analysis')">Analysis</button>
+    </nav>
+  </div>
+</header>
+
+<section id="home" class="site-page active">
+
+<main class="hero">
+<iframe class="hero-video" src="https://www.youtube-nocookie.com/embed/8FeCmr1jAf4?autoplay=1&mute=1&loop=1&playlist=8FeCmr1jAf4&controls=0&rel=0&playsinline=1&iv_load_policy=3" title="Burning fire background" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" style="position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:cover;pointer-events:none;z-index:0;"></iframe>
+<div class="hero-content"><div class="eyebrow">Fuel & Boiler Engineering Simulation</div><h1>Fuel performance.<br>Made visible.</h1><p>An interactive engineering simulation for fuel quality, NCV, ash, combustible matter, steam generation and boiler fuel requirement.</p><a class="btn" type="button" onclick="showPage('simulation');return false;" href="simulation.html">Open Simulation →</a><div style="margin-top:10px;font-size:11px;opacity:.7">Background fire video: YouTube video 8FeCmr1jAf4.</div>
+<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← Home</button><button class="page-nav-btn page-nav-next" onclick="goNextPage(this)">About →</button></div>
+</div>
+<div class="credit">Created by Karan</div></main></section>
+<section id="about" class="site-page">
+
+<main class="page container"><div class="section-head"><div class="eyebrow">About this project</div><h1>Fuel & Boiler Performance Simulation</h1><p>This website presents the interactive calculation model contained in the supplied Forbes Vyncke simulation. It lets the user change fuel and boiler parameters and immediately see their effect on as-received GCV, NCV, steam generation, fuel requirement and combustible matter.</p></div>
+<div class="grid"><div class="info-card"><div class="number">01</div><h3>Fuel Quality</h3><p>Compare Indonesian Coal, Groundnut Briquette, Rice Husk and Mustard Briquette, or enter a custom fuel.</p></div>
+<div class="info-card"><div class="number">02</div><h3>NCV Calculation</h3><p>NCV is calculated from the simulation's as-received GCV, moisture and hydrogen relationship.</p></div>
+<div class="info-card"><div class="number">03</div><h3>Boiler Output</h3><p>Use efficiency and enthalpy inputs to calculate steam generation per tonne of fuel and the fuel requirement for a target capacity.</p></div>
+</div>
+<div class="card"><div class="section-title">Model Parameters</div><p class="info">The supplied simulation includes Dry GCV, Moisture, Fuel Ash, Hydrogen, Boiler Efficiency, Steam Enthalpy, Feedwater Enthalpy and Target Boiler Capacity. It also provides boiler-capacity comparison, moisture sensitivity and live step-by-step calculations.</p></div>
+<div class="card"><div class="section-title">Navigation</div><p class="info">Use <b class="highlight">Simulation</b> for the interactive inputs and main KPIs. Use <b class="highlight">Analysis</b> for the capacity table, moisture sensitivity, NCV and live calculation sections.</p></div>
+<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← Home</button><button class="page-nav-btn page-nav-next" onclick="goNextPage(this)">Simulation →</button></div>
+</main></section>
+<section id="simulation" class="site-page">
+
+<main class="sim-shell container"><div class="sim-title"><div><h1>Interactive Simulation</h1><p>Adjust the parameters and the model updates live.</p></div><span class="pill">LIVE MODEL</span></div>
+<div class="card">
+<div class="section-title">Select Fuel</div>
+<div class="fuel-buttons">
+<button class="fuel-btn active" onclick="selectFuel('coal')">Indonesian Coal</button>
+<button class="fuel-btn" onclick="selectFuel('groundnut')">Groundnut Briquette</button>
+<button class="fuel-btn" onclick="selectFuel('rice')">Rice Husk</button>
+<button class="fuel-btn" onclick="selectFuel('mustard')">Mustard Briquette</button>
+</div></div><div class="card">
+<div class="section-title">Add / Edit Custom Fuel</div>
+<div class="custom-grid">
+<input id="customName" placeholder="Fuel name">
+<input id="customGCV" type="number" placeholder="Dry GCV kcal/kg">
+<input id="customMoisture" type="number" placeholder="Moisture %">
+<input id="customAsh" type="number" placeholder="Ash %">
+<input id="customH" type="number" placeholder="Hydrogen %">
+</div>
+<div class="custom-actions"><button class="add-btn" onclick="applyCustomFuel()">Apply Custom Fuel</button></div>
+</div><div class="card">
+<div class="section-title">Fuel & Boiler Parameters</div>
+<div class="control-grid">
+<div class="control"><label>Dry GCV (kcal/kg)</label><div class="value-row"><input id="gcvSlider" type="range" min="2000" max="8000" step="1" value="6944" oninput="updateSimulation()"><input id="gcvValue" class="number-box" type="number" value="6944" oninput="sync('gcv')"></div></div>
+<div class="control"><label>Moisture (%)</label><div class="value-row"><input id="moistureSlider" type="range" min="0" max="45" step="0.5" value="28" oninput="updateSimulation()"><input id="moistureValue" class="number-box" type="number" value="28" oninput="sync('moisture')"></div></div>
+<div class="control"><label>Fuel Ash (%)</label><div class="value-row"><input id="ashSlider" type="range" min="0" max="35" step="0.5" value="8.5" oninput="updateSimulation()"><input id="ashValue" class="number-box" type="number" value="8.5" oninput="sync('ash')"></div></div>
+<div class="control"><label>Hydrogen (%)</label><div class="value-row"><input id="hSlider" type="range" min="0" max="10" step="0.05" value="4.5" oninput="updateSimulation()"><input id="hValue" class="number-box" type="number" value="4.5" oninput="sync('h')"></div></div>
+<div class="control"><label>Boiler Efficiency (%)</label><div class="value-row"><input id="effSlider" type="range" min="50" max="95" step="0.5" value="80" oninput="updateSimulation()"><input id="effValue" class="number-box" type="number" value="80" oninput="sync('eff')"></div></div>
+<div class="control"><label>Steam Enthalpy (kJ/kg)</label><div class="value-row"><input id="steamHSlider" type="range" min="2600" max="2850" step="1" value="2740" oninput="updateSimulation()"><input id="steamHValue" class="number-box" type="number" value="2740" oninput="sync('steamH')"></div></div>
+<div class="control"><label>Feedwater Enthalpy (kJ/kg)</label><div class="value-row"><input id="feedHSlider" type="range" min="100" max="700" step="1" value="401" oninput="updateSimulation()"><input id="feedHValue" class="number-box" type="number" value="401" oninput="sync('feedH')"></div></div>
+<div class="control"><label>Target Boiler Capacity (TPH)</label><div class="value-row"><input id="capacitySlider" type="range" min="1" max="100" step="0.5" value="10" oninput="updateSimulation()"><input id="capacityValue" class="number-box" type="number" value="10" oninput="sync('capacity')"></div></div>
+</div>
+<div class="kpi-grid">
+<div class="kpi"><div class="kpi-label">AS-RECEIVED GCV</div><div class="kpi-value" id="gcvResult">-</div><div class="kpi-unit">kcal/kg</div></div>
+<div class="kpi"><div class="kpi-label">NCV</div><div class="kpi-value" id="ncvResult">-</div><div class="kpi-unit">kcal/kg</div></div>
+<div class="kpi"><div class="kpi-label">STEAM / FUEL</div><div class="kpi-value" id="steamResult">-</div><div class="kpi-unit">T steam / T fuel</div></div>
+<div class="kpi"><div class="kpi-label">FUEL REQUIREMENT</div><div class="kpi-value" id="fuelResult">-</div><div class="kpi-unit">TPH</div></div>
+<div class="kpi"><div class="kpi-label">COMBUSTIBLE MATTER</div><div class="kpi-value" id="combustibleResult">-</div><div class="kpi-unit">%</div></div>
+</div>
+</div>
+<div class="card">
+<div class="section-title">Boiler Energy Flow</div>
+<div class="process">
+<div class="process-box"><div class="process-icon">🔥</div><div class="process-title">Fuel</div><div class="process-sub" id="processFuel">Indonesian Coal</div></div>
+<div class="arrow">→</div>
+<div class="process-box"><div class="process-icon">🛢️</div><div class="process-title">Boiler</div><div class="process-sub">NCV × Efficiency</div></div>
+<div class="arrow">→</div>
+<div class="process-box"><div class="process-icon">💨</div><div class="process-title">Steam Output</div><div class="process-sub" id="processSteam">-</div></div>
+</div>
+</div>
+<div class="card ncv-card" style="border-color:#3b4654;">
+<div class="ncv-header"><div class="ncv-title">Fuel Ash Parameter</div><div class="ncv-badge">LIVE CALCULATION</div></div>
+<div class="explanation" id="ashExplanation">-</div>
+<div class="formula">Combustible Matter = 100 − Moisture − Ash</div>
+</div>
+<div class="card ncv-card">
+<div class="ncv-header"><div class="ncv-title">NCV Parameter</div><div class="ncv-badge">LIVE CALCULATION</div></div>
+<div class="explanation" id="ncvExplanation">-</div>
+<div class="formula">NCV = GCV<sub>AR</sub> − 587 × [9 × (H/100) + Moisture/100]</div>
+</div>
+<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← About</button><button class="page-nav-btn page-nav-next" onclick="goNextPage(this)">Analysis →</button></div>
+</main>
+</section>
+<section id="analysis" class="site-page">
+
+<main class="sim-shell container"><div class="sim-title"><div><h1>Simulation Analysis</h1><p>Capacity requirement, moisture sensitivity and calculation trail.</p></div><span class="pill">ENGINEERING VIEW</span></div>
+<div class="card">
+<div class="section-title">Boiler Capacity & Fuel Requirement</div>
+<div class="table-wrap"><table><thead><tr><th>Boiler Capacity (TPH)</th><th>Fuel</th><th>Moisture (%)</th><th>NCV (kcal/kg)</th><th>Steam/Fuel (T/T)</th><th>Fuel Requirement (TPH)</th><th>Action</th></tr></thead><tbody id="capacityBody"></tbody></table></div>
+<button class="add-btn" onclick="addCapacity()">+ Add Boiler Capacity</button>
+</div>
+
+<div class="card">
+<div class="section-title">NCV Effect on Steam / Fuel Ratio</div>
+<div class="chart-wrap"><svg id="ncvChart" class="chart" viewBox="0 0 900 260"></svg></div>
+<p class="info">Shows how the Steam/Fuel ratio changes as NCV varies (±50%) at the current boiler efficiency and enthalpy drop. The dashed marker is your current operating point.</p>
+</div>
+
+<div class="card">
+<div class="section-title">Moisture Sensitivity</div>
+<div class="moisture-grid" id="moistureGrid"></div>
+</div><div class="card">
+<div class="section-title">Live Calculation</div>
+<div class="info" id="calculationText"></div>
+</div>
+<div class="card">
+<div class="section-title">Operational & Performance Parameters (28 Parameters)</div><div class="table-wrap"><table><thead><tr><th>SN</th><th>Parameter</th><th>Value</th><th>Remarks</th></tr></thead><tbody><tr><td data-label="SN">1</td><td class="param-name">Primary fuel in use</td><td data-label="Value"><select id="p1" class="report-select"><option>Indonesian coal</option><option>Rice husk</option><option>Groundnut shell briquette</option><option>Mustard husk briquette</option><option>Bagasse</option><option>Wood chips</option><option>Other</option></select></td><td data-label="Remarks">Primary fuel</td></tr><tr><td data-label="SN">2</td><td class="param-name">GCV / NCV, kcal/kg</td><td data-label="Value"><input id="p2" class="report-input" type="text" readonly placeholder="Linked to Simulation"></td><td data-label="Remarks">Linked to Page 1</td></tr><tr><td data-label="SN">3</td><td class="param-name">Carbon, %</td><td data-label="Value"><input id="p3" class="report-input" type="number"></td><td data-label="Remarks">Ultimate analysis</td></tr><tr><td data-label="SN">4</td><td class="param-name">Hydrogen, %</td><td data-label="Value"><input id="p4" class="report-input" type="number"></td><td data-label="Remarks">Ultimate analysis</td></tr><tr><td data-label="SN">5</td><td class="param-name">Moisture, %</td><td data-label="Value"><input id="p5" class="report-input" type="number"></td><td data-label="Remarks">As received</td></tr><tr><td data-label="SN">6</td><td class="param-name">Ash, %</td><td data-label="Value"><input id="p6" class="report-input" type="number"></td><td data-label="Remarks">As received</td></tr><tr><td data-label="SN">7</td><td class="param-name">Secondary fuel, if any</td><td data-label="Value"><input id="p7" class="report-input" type="text"></td><td data-label="Remarks">Optional</td></tr><tr><td data-label="SN">8</td><td class="param-name">Date of last fuel test</td><td data-label="Value"><input id="p8" class="report-input" type="date"></td><td data-label="Remarks">Ultimate & proximate</td></tr><tr><td data-label="SN">9</td><td class="param-name">Operating pressure, kg/cm²</td><td data-label="Value"><input id="p9" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">10</td><td class="param-name">Steam flow / load, TPH</td><td data-label="Value"><input id="p10" class="report-input" type="number"></td><td data-label="Remarks">Target load</td></tr><tr><td data-label="SN">11</td><td class="param-name">Steam to fuel ratio achieved</td><td data-label="Value"><input id="p11" class="report-input" type="number"></td><td data-label="Remarks">t/t</td></tr><tr><td data-label="SN">12</td><td class="param-name">Tube cleaning interval, days</td><td data-label="Value"><input id="p12" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">13</td><td class="param-name">Operating hours per month</td><td data-label="Value"><input id="p13" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">14</td><td class="param-name">Stack temperature, °C</td><td data-label="Value"><input id="p14" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">15</td><td class="param-name">Chimney bottom cleaning, days</td><td data-label="Value"><input id="p15" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">16</td><td class="param-name">Grate cleaning interval, days</td><td data-label="Value"><input id="p16" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">17</td><td class="param-name">SPM, mg/Nm³</td><td data-label="Value"><input id="p17" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">18</td><td class="param-name">SOx / NOx, ppm</td><td data-label="Value"><input id="p18" class="report-input" type="text"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">19</td><td class="param-name">Dust collection</td><td data-label="Value"><select id="p19" class="report-select"><option>Bag filter</option><option>Multi cyclone</option><option>ESP</option><option>None</option></select></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">20</td><td class="param-name">Efficiency, indirect method, %</td><td data-label="Value"><input id="p20" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">21</td><td class="param-name">Ash handling system</td><td data-label="Value"><input id="p21" class="report-input" type="text"></td><td data-label="Remarks">Type and condition</td></tr><tr><td data-label="SN">22</td><td class="param-name">Feedwater temperature, °C</td><td data-label="Value"><input id="p22" class="report-input" type="number"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">23</td><td class="param-name">Feedwater tank</td><td data-label="Value"><select id="p23" class="report-select"><option>Atmospheric</option><option>Pressurised</option></select></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">24</td><td class="param-name">Make-up water temperature, °C</td><td data-label="Value"><input id="p24" class="report-input" type="number"></td><td data-label="Remarks">Without steam injection</td></tr><tr><td data-label="SN">25</td><td class="param-name">Water treatment / analysis</td><td data-label="Value"><input id="p25" class="report-input" type="text"></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">26</td><td class="param-name">Major operational issues</td><td data-label="Value"><textarea id="p26" class="report-textarea" rows="2" placeholder="Enter major operational issues"></textarea></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">27</td><td class="param-name">Site observations</td><td data-label="Value"><textarea id="p27" class="report-textarea" rows="2" placeholder="Enter site observations"></textarea></td><td data-label="Remarks"></td></tr><tr><td data-label="SN">28</td><td class="param-name">Customer feedback</td><td data-label="Value"><textarea id="p28" class="report-textarea" rows="2" placeholder="Enter customer feedback"></textarea></td><td data-label="Remarks"></td></tr></tbody></table></div><div class="custom-actions"><button class="add-btn" onclick="window.print()">Save / Print Report</button><button class="add-btn" onclick="saveReportToDrive()" style="background:#2b6ef2;color:#fff">Save to Google Drive</button></div>
+<p class="info" id="driveStatus" style="margin-top:10px"></p>
+</div>
+
+<div class="card"><div class="section-title">Calculation Reference</div><div class="formula">As-received GCV = Dry GCV × (1 − Moisture/100)</div><div class="formula">NCV = GCV<sub>AR</sub> − 587 × [9 × (H/100) + Moisture/100]</div><div class="formula">Steam/Fuel = NCV × 4.1868 × Efficiency / (Steam Enthalpy − Feedwater Enthalpy)</div><div class="formula">Fuel Requirement = Target Boiler Capacity / Steam per Fuel</div></div>
+<div class="page-flip"><button class="page-nav-btn page-nav-prev" onclick="goPrevPage(this)">← Simulation</button><button class="page-nav-btn page-nav-next" onclick="goNextPage(this)">Home →</button></div>
+</main>
+</section>
+
+
+
+<script src="script.js">
+
+
+
+
+
+</script>
+</body>
+</html>
